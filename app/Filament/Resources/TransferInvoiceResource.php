@@ -2,43 +2,46 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrderResource\Pages;
+use App\Filament\Resources\TransferInvoiceResource\Pages;
 use App\Forms\Components\Selector;
-use App\Models\Order;
 use App\Models\Product;
+use App\Models\TransferInvoice;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class OrderResource extends Resource
+class TransferInvoiceResource extends Resource
 {
-    protected static ?string $model = Order::class;
-    protected static ?string $navigationIcon = 'fas-shopping-cart';
+    protected static ?string $model = TransferInvoice::class;
 
+    protected static ?string $navigationIcon = 'bx-transfer';
 
-    protected static ?string $label = "طلب";
-    protected static ?string $pluralLabel = "طلبات المرضى";
+    protected static ?string $label = "تحويل";
+    protected static ?string $pluralLabel = "تحويل مخزون";
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Section::make([
-                    Selector::make('center_id')
-                        ->label('المركز')
-                        ->relationship('center', 'name')
-                        ->default(auth()->user()?->center_id)
+                    Selector::make('from_center_id')
+                        ->label('من مركز')
                         ->reactive()
+                        ->relationship('fromCenter', 'name')
                         ->required(),
-                    Selector::make('patient_id')
-                        ->label('المريض')
+                    Selector::make('to_center_id')
+                        ->label('إلى مركز')
+                        ->relationship('toCenter', 'name')
                         ->required()
-                        ->relationship('patient', 'name'),
-                    Selector::make('appointment_id')
-                        ->label('رقم الموعد')
-                        ->relationship('appointment', 'id'),
+                        ->reactive()
+                        ->rules([
+                            'different:from_center_id',
+                        ])
+                        ->validationMessages([
+                            'to_center_id.different' => 'لا يمكن اختيار نفس المركز كمصدر ووجهة.',
+                        ]),
                     Forms\Components\Select::make('status')
                         ->label('الحالة')
                         ->native(false)
@@ -51,7 +54,6 @@ class OrderResource extends Resource
                         ->required(fn(string $context) => $context === 'edit')
                         ->disabled(fn(string $context) => $context === 'create'),
                 ])->columns(),
-
 
                 Forms\Components\Section::make('الأصناف')
                     ->schema([
@@ -86,7 +88,7 @@ class OrderResource extends Resource
                                         $get('product_id')
                                             ? 'max:' . Product::find($get('product_id'))
                                                 ->stockInCenter(
-                                                    $get('../../center_id')
+                                                    $get('../../from_center_id')
                                                     ?? auth()->user()?->center_id
                                                 )
                                             : null,
@@ -103,68 +105,27 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('patient.name')
-                    ->label('المريض')
+                Tables\Columns\TextColumn::make('fromCenter.name')
                     ->numeric()
-                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('center.name')
-                    ->label('المركز')
-                    ->alignCenter()
-                    ->searchable()
+                Tables\Columns\TextColumn::make('toCenter.name')
+                    ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('appointment.id')
-                    ->label('رقم الموعد')
-                    ->alignCenter()
-                    ->placeholder('-')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->label('الحالة')
-                    ->formatStateUsing(fn($state) => match ($state) {
-                        'pending' => 'قيد الانتظار',
-                        'confirmed' => 'مكتمل',
-                        'cancelled' => 'ملغي',
-                        default => $state,
-                    })
-                    ->color(fn($state) => match ($state) {
-                        'pending' => 'warning',
-                        'confirmed' => 'success',
-                        'cancelled' => 'danger',
-                        default => 'secondary',
-                    })
+                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
                     ->sortable()
-                    ->alignCenter(),
-
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('confirm')
-                        ->label('تأكيد')
-                        ->icon('fas-check-circle')
-                        ->action(function (Order $record) {
-                            $record->update(['status' => 'confirmed']);
-                        })
-                        ->color('success')
-                        ->visible(fn(Order $record) => $record->status === 'pending')
-                        ->requiresConfirmation(),
-
-                    Tables\Actions\Action::make('cancel')
-                        ->label('إلغاء')
-                        ->icon('fas-times-circle')
-                        ->action(function (Order $record) {
-                            $record->update(['status' => 'cancelled']);
-                        })
-                        ->color('danger')
-                        ->visible(fn(Order $record) => $record->status === 'pending')
-                        ->requiresConfirmation(),
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ]),
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -183,9 +144,9 @@ class OrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'index' => Pages\ListTransferInvoices::route('/'),
+            'create' => Pages\CreateTransferInvoice::route('/create'),
+            'edit' => Pages\EditTransferInvoice::route('/{record}/edit'),
         ];
     }
 }
