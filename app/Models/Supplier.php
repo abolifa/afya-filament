@@ -14,8 +14,8 @@ class Supplier extends Model
 
     protected $guarded = ['id'];
 
-    public function orders(): HasMany
+    public function invoices(): HasMany
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(Invoice::class);
     }
 }

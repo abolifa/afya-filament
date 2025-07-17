@@ -12,11 +12,8 @@ return new class extends Migration {
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['in', 'out', 'transfer'])->index();
             $table->foreignId('center_id')->constrained('centers')->cascadeOnDelete();
             $table->foreignId('patient_id')->nullable()->constrained('patients')->nullOnDelete();
-            $table->foreignId('supplier_id')->nullable()->constrained('suppliers')->nullOnDelete();
-            $table->foreignId('to_center_id')->nullable()->constrained('centers')->nullOnDelete();
             $table->foreignId('appointment_id')->nullable()->constrained('appointments')->cascadeOnDelete();
             $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending')->index();
             $table->timestamps();

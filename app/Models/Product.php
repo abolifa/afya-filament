@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @method static find(int|null $newProductId)
+ * @method static pluck(string $string, string $string1)
  */
 class Product extends Model
 {

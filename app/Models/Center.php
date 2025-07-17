@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @method static create(array $validated)
+ * @method static pluck(string $string, string $string1)
  * @property mixed $id
  */
 class Center extends Model
@@ -45,13 +46,15 @@ class Center extends Model
         return $this->hasMany(Order::class);
     }
 
-    public function incomingTransfers(): HasMany
-    {
-        return $this->hasMany(Order::class, 'to_center_id');
-    }
 
     public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class);
+    }
+
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 }

@@ -24,10 +24,6 @@ class Order extends Model
         return $this->belongsTo(Center::class);
     }
 
-    public function toCenter(): BelongsTo
-    {
-        return $this->belongsTo(Center::class, 'to_center_id');
-    }
 
     public function items(): HasMany
     {
@@ -37,11 +33,6 @@ class Order extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
-    }
-
-    public function supplier(): BelongsTo
-    {
-        return $this->belongsTo(Supplier::class);
     }
 
     public function patient(): BelongsTo

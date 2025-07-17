@@ -53,7 +53,6 @@ class EditAppointment extends EditRecord
 
             if (!$order) {
                 $order = Order::create([
-                    'type' => 'out',
                     'status' => 'pending',
                     'center_id' => $record->center_id,
                     'patient_id' => $record->patient_id,

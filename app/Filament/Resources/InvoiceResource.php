@@ -2,24 +2,24 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrderResource\Pages;
+use App\Filament\Resources\InvoiceResource\Pages;
 use App\Forms\Components\Selector;
-use App\Models\Order;
+use App\Models\Invoice;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class OrderResource extends Resource
+class InvoiceResource extends Resource
 {
-    protected static ?string $model = Order::class;
+    protected static ?string $model = Invoice::class;
 
-    protected static ?string $navigationIcon = 'fas-shopping-cart';
+    protected static ?string $navigationIcon = 'fas-file-invoice-dollar';
 
 
-    protected static ?string $label = "طلب";
-    protected static ?string $pluralLabel = "طلبات المرضى";
+    protected static ?string $label = "فاتورة";
+    protected static ?string $pluralLabel = "فواتير المشتريات";
 
     public static function form(Form $form): Form
     {
@@ -28,16 +28,11 @@ class OrderResource extends Resource
                 Forms\Components\Section::make([
                     Selector::make('center_id')
                         ->label('المركز')
-                        ->relationship('center', 'name')
-                        ->default(auth()->user()?->center_id)
-                        ->required(),
-                    Selector::make('patient_id')
-                        ->label('المريض')
                         ->required()
-                        ->relationship('patient', 'name'),
-                    Selector::make('appointment_id')
-                        ->label('رقم الموعد')
-                        ->relationship('appointment', 'id'),
+                        ->relationship('center', 'name'),
+                    Selector::make('supplier_id')
+                        ->label('المورد')
+                        ->relationship('supplier', 'name'),
                     Forms\Components\Select::make('status')
                         ->label('الحالة')
                         ->native(false)
@@ -75,8 +70,8 @@ class OrderResource extends Resource
                                     ->required(),
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('الكمية')
-                                    ->numeric()
                                     ->required()
+                                    ->numeric()
                                     ->minValue(1)
                                     ->default(1),
                             ])
@@ -88,20 +83,15 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('patient.name')
-                    ->label('المريض')
+                Tables\Columns\TextColumn::make('center.name')
+                    ->label('المركز')
                     ->numeric()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('center.name')
-                    ->label('المركز')
+                Tables\Columns\TextColumn::make('supplier.name')
+                    ->label('المورد')
                     ->alignCenter()
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('appointment.id')
-                    ->label('رقم الموعد')
-                    ->alignCenter()
-                    ->placeholder('-')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -120,7 +110,6 @@ class OrderResource extends Resource
                     })
                     ->sortable()
                     ->alignCenter(),
-
             ])
             ->filters([
                 //
@@ -130,21 +119,21 @@ class OrderResource extends Resource
                     Tables\Actions\Action::make('confirm')
                         ->label('تأكيد')
                         ->icon('fas-check-circle')
-                        ->action(function (Order $record) {
+                        ->action(function (Invoice $record) {
                             $record->update(['status' => 'confirmed']);
                         })
                         ->color('success')
-                        ->visible(fn(Order $record) => $record->status === 'pending')
+                        ->visible(fn(Invoice $record) => $record->status === 'pending')
                         ->requiresConfirmation(),
 
                     Tables\Actions\Action::make('cancel')
                         ->label('إلغاء')
                         ->icon('fas-times-circle')
-                        ->action(function (Order $record) {
+                        ->action(function (Invoice $record) {
                             $record->update(['status' => 'cancelled']);
                         })
                         ->color('danger')
-                        ->visible(fn(Order $record) => $record->status === 'pending')
+                        ->visible(fn(Invoice $record) => $record->status === 'pending')
                         ->requiresConfirmation(),
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
@@ -152,9 +141,9 @@ class OrderResource extends Resource
                 ]),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+//                Tables\Actions\BulkActionGroup::make([
+//                    Tables\Actions\DeleteBulkAction::make(),
+//                ]),
             ]);
     }
 
@@ -168,9 +157,9 @@ class OrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'index' => Pages\ListInvoices::route('/'),
+            'create' => Pages\CreateInvoice::route('/create'),
+            'edit' => Pages\EditInvoice::route('/{record}/edit'),
         ];
     }
 }

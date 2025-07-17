@@ -23,7 +23,6 @@ class CreateAppointment extends CreateRecord
 
         // Create order
         $order = Order::create([
-            'type' => 'out',
             'status' => 'pending',
             'appointment_id' => $appointment->id,
             'patient_id' => $appointment->patient_id,
