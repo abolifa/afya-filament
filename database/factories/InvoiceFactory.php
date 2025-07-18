@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Center;
+use App\Models\Invoice;
+use App\Models\Supplier;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Invoice>
+ * @extends Factory<Invoice>
  */
 class InvoiceFactory extends Factory
 {
@@ -17,7 +20,13 @@ class InvoiceFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'center_id' => Center::factory(),
+            'supplier_id' => $this->faker->boolean()
+                ? Supplier::factory()
+                : null,
+            'status' => $this->faker->randomElement([
+                'pending', 'confirmed', 'cancelled'
+            ]),
         ];
     }
 }

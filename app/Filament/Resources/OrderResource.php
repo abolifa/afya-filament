@@ -17,6 +17,8 @@ class OrderResource extends Resource
     protected static ?string $model = Order::class;
     protected static ?string $navigationIcon = 'fas-shopping-cart';
 
+    protected static ?string $navigationGroup = "إدارة المخزون";
+
 
     protected static ?string $label = "طلب";
     protected static ?string $pluralLabel = "طلبات المرضى";

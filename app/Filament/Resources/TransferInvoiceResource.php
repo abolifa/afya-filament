@@ -21,6 +21,9 @@ class TransferInvoiceResource extends Resource
     protected static ?string $label = "تحويل";
     protected static ?string $pluralLabel = "تحويل مخزون";
 
+    protected static ?string $navigationGroup = "إدارة المخزون";
+
+
     public static function form(Form $form): Form
     {
         return $form

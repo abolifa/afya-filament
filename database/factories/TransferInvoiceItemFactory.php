@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Product;
+use App\Models\TransferInvoice;
+use App\Models\TransferInvoiceItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TransferInvoiceItem>
+ * @extends Factory<TransferInvoiceItem>
  */
 class TransferInvoiceItemFactory extends Factory
 {
@@ -17,7 +20,9 @@ class TransferInvoiceItemFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'transfer_invoice_id' => TransferInvoice::factory(),
+            'product_id' => Product::factory(),
+            'quantity' => $this->faker->numberBetween(1, 15),
         ];
     }
 }

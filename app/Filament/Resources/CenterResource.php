@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CenterResource\Pages;
+use App\Filament\Resources\CenterResource\RelationManagers\SchedulesRelationManager;
 use App\Models\Center;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -18,6 +19,8 @@ class CenterResource extends Resource
 
     protected static ?string $label = "مركز";
     protected static ?string $pluralLabel = "المراكز";
+
+    protected static ?string $navigationGroup = "إدارة الموارد";
 
 
     public static function form(Form $form): Form
@@ -115,7 +118,7 @@ class CenterResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            SchedulesRelationManager::class,
         ];
     }
 

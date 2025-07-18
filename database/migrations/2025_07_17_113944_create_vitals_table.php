@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -15,13 +14,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->date('recorded_at');
-            $table->decimal('weight', 5, 2)->nullable();
-            $table->decimal('systolic', 5, 2)->nullable();
-            $table->decimal('diastolic', 5, 2)->nullable();
-            $table->decimal('heart_rate', 5, 2)->nullable();
-            $table->decimal('temperature', 5, 2)->nullable();
-            $table->decimal('oxygen_saturation', 5, 2)->nullable();
-            $table->decimal('sugar_level', 5, 2)->nullable();
+            $table->float('weight')->nullable();
+            $table->float('systolic')->nullable();
+            $table->float('diastolic')->nullable();
+            $table->float('heart_rate')->nullable();
+            $table->float('temperature')->nullable();
+            $table->float('oxygen_saturation')->nullable();
+            $table->float('sugar_level')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
         });

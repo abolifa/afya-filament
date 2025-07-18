@@ -17,6 +17,8 @@ class CenterFactory extends Factory
      */
     public function definition(): array
     {
+        $this->faker->unique(true); // clear previous uniques
+
         return [
             'name' => 'مركز ' . $this->faker->unique()->city(),
             'phone' => $this->faker->unique()->numerify('091#######'),

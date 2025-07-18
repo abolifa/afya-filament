@@ -23,13 +23,13 @@ class PatientFactory extends Factory
     public function definition(): array
     {
         return [
-            'file_number' => $this->faker->unique()->numerify('F####'),
+            'file_number' => $this->faker->unique()->numerify('########'),
             'national_id' => $this->faker->unique()->numerify('1###########'),
-            'family_issue_number' => $this->faker->optional()->numerify('2####'),
+            'family_issue_number' => $this->faker->optional()->numerify('##########'),
             'name' => $this->faker->name(),
             'phone' => $this->faker->unique()->numerify('09#########'),
             'password' => static::$password ??= Hash::make('091091'),
-            'email' => $this->faker->boolean(70) ? $this->faker->unique()->safeEmail() : null,
+            'email' => $this->faker->boolean(70) ? Str::lower(Str::uuid()) . '@example.com' : null,
             'gender' => $this->faker->randomElement(['male', 'female']),
             'dob' => $this->faker->optional()->date(),
             'blood_group' => $this->faker->optional()->randomElement(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PatientResource\Pages;
+use App\Filament\Resources\PatientResource\RelationManagers\VitalsRelationManager;
 use App\Forms\Components\BooleanField;
 use App\Forms\Components\Selector;
 use App\Models\Patient;
@@ -17,6 +18,9 @@ class PatientResource extends Resource
     protected static ?string $model = Patient::class;
 
     protected static ?string $navigationIcon = 'fas-user-injured';
+
+    protected static ?string $navigationGroup = "إدارة المرضى";
+
 
     protected static ?string $label = "مريض";
     protected static ?string $pluralLabel = "المرضى";
@@ -226,7 +230,7 @@ class PatientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            VitalsRelationManager::class,
         ];
     }
 

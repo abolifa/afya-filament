@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @method static create(array $validated)
  * @method static pluck(string $string, string $string1)
+ * @method static where(string $string, string $string1, mixed $id)
  * @property mixed $id
  */
 class Center extends Model

@@ -26,9 +26,9 @@ class DoctorFactory extends Factory
             'center_id' => Center::factory(),
             'name' => $this->faker->name(),
             'specialization' => $this->faker->optional()->word(),
-            'email' => $this->faker->unique()->safeEmail(),
+            'email' => Str::lower(Str::uuid()) . '@example.com',
             'phone' => $this->faker->optional()->numerify('09#########'),
-            'password' => static::$password ??= Hash::make('091091'),
+            'password' => Hash::make('091091'),
             'remember_token' => Str::random(10),
         ];
     }

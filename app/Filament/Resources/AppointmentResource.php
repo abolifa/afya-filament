@@ -24,93 +24,7 @@ class AppointmentResource extends Resource
     protected static ?string $label = "موعد";
     protected static ?string $pluralLabel = "المواعيد";
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Section::make([
-                    Selector::make('patient_id')
-                        ->label('المريض')
-                        ->relationship('patient', 'name')
-                        ->required(),
-                    Forms\Components\Select::make('status')
-                        ->label('الحالة')
-                        ->options([
-                            'pending' => 'قيد الانتظار',
-                            'confirmed' => 'مؤكد',
-                            'cancelled' => 'ملغي',
-                            'completed' => 'مكتمل',
-                        ])
-                        ->default('pending')
-                        ->required(),
-                    Selector::make('center_id')
-                        ->label('المركز')
-                        ->reactive()
-                        ->relationship('center', 'name')
-                        ->required(),
-                    Selector::make('doctor_id')
-                        ->label('الطبيب')
-                        ->disabled(fn($get) => !$get('center_id'))
-                        ->options(function (Forms\Get $get) {
-                            $centerId = $get('center_id');
-                            if (!$centerId) {
-                                return [];
-                            }
-                            return Doctor::where('center_id', $centerId)
-                                ->pluck('name', 'id')
-                                ->toArray();
-                        }),
-                    Forms\Components\DatePicker::make('date')
-                        ->label('التاريخ')
-                        ->displayFormat('d/m/Y')
-                        ->default(Carbon::now())
-                        ->required(),
-                    Forms\Components\TimePicker::make('time')
-                        ->label('الوقت')
-                        ->displayFormat('h:i A')
-                        ->default(Carbon::now()->format('h:i'))
-                        ->required(),
-                    BooleanField::make('intended')
-                        ->label('الحضور')
-                        ->default(false)
-                        ->required(),
-
-                    BooleanField::make('has_order')
-                        ->label('طلب منتجات')
-                        ->dehydrated()
-                        ->reactive()
-                        ->default(false),
-                ])->columns(3),
-                Forms\Components\Section::make('طلب المنتجات')
-                    ->schema([
-                        Forms\Components\Repeater::make('order_items')
-                            ->label('المنتجات')
-                            ->schema([
-                                Forms\Components\Select::make('product_id')
-                                    ->label('المنتج')
-                                    ->options(Product::all()->pluck('name', 'id'))
-                                    ->required(),
-                                Forms\Components\TextInput::make('quantity')
-                                    ->label('الكمية')
-                                    ->numeric()
-                                    ->minValue(1)
-                                    ->required(),
-                            ])
-                            ->columnSpanFull()
-                            ->columns()
-                            ->defaultItems(1)
-                            ->minItems(1)
-                            ->addActionLabel('إضافة منتج'),
-                    ])
-                    ->visible(fn($get) => $get('has_order'))
-                    ->columns(),
-                Forms\Components\Section::make([
-                    Forms\Components\RichEditor::make('notes')
-                        ->label('ملاحظات')
-                        ->columnSpanFull(),
-                ]),
-            ]);
-    }
+    protected static ?string $navigationGroup = "إدارة المرضى";
 
     public static function table(Table $table): Table
     {
@@ -214,6 +128,31 @@ class AppointmentResource extends Resource
                         ->color('primary')
                         ->visible(fn(Appointment $record) => $record->status === 'confirmed')
                         ->requiresConfirmation(),
+
+                    Tables\Actions\Action::make('reschedule')
+                        ->label('إعادة جدولة')
+                        ->icon('fas-calendar-alt')
+                        ->form([
+                            Forms\Components\DatePicker::make('date')
+                                ->label('التاريخ')
+                                ->displayFormat('d/m/Y')
+                                ->default(fn(Appointment $record) => $record->date)
+                                ->required(),
+                            Forms\Components\TimePicker::make('time')
+                                ->label('الوقت')
+                                ->displayFormat('h:i A')
+                                ->default(fn(Appointment $record) => $record->time)
+                                ->required(),
+                        ])
+                        ->action(function (Appointment $record, array $data) {
+                            $record->update([
+                                'status' => 'pending',
+                                'date' => Carbon::parse($data['date'])->format('Y-m-d'),
+                                'time' => Carbon::parse($data['time'])->format('H:i:s'),
+                            ]);
+                        })
+                        ->visible(fn(Appointment $record) => $record->status !== 'completed')
+                        ->requiresConfirmation(false),
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
@@ -223,6 +162,108 @@ class AppointmentResource extends Resource
 //                Tables\Actions\BulkActionGroup::make([
 //                    Tables\Actions\DeleteBulkAction::make(),
 //                ]),
+            ]);
+    }
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make([
+                    Selector::make('patient_id')
+                        ->label('المريض')
+                        ->relationship('patient', 'name')
+                        ->required(),
+                    Forms\Components\Select::make('status')
+                        ->label('الحالة')
+                        ->options([
+                            'pending' => 'قيد الانتظار',
+                            'confirmed' => 'مؤكد',
+                            'cancelled' => 'ملغي',
+                            'completed' => 'مكتمل',
+                        ])
+                        ->default('pending')
+                        ->required(),
+                    Selector::make('center_id')
+                        ->label('المركز')
+                        ->reactive()
+                        ->relationship('center', 'name')
+                        ->required(),
+                    Selector::make('doctor_id')
+                        ->label('الطبيب')
+                        ->disabled(fn($get) => !$get('center_id'))
+                        ->options(function (Forms\Get $get) {
+                            $centerId = $get('center_id');
+                            if (!$centerId) {
+                                return [];
+                            }
+                            return Doctor::where('center_id', $centerId)
+                                ->pluck('name', 'id')
+                                ->toArray();
+                        }),
+                    Forms\Components\DatePicker::make('date')
+                        ->label('التاريخ')
+                        ->displayFormat('d/m/Y')
+                        ->default(Carbon::now())
+                        ->required(),
+                    Forms\Components\TimePicker::make('time')
+                        ->label('الوقت')
+                        ->displayFormat('h:i A')
+                        ->default(Carbon::now()->format('h:i'))
+                        ->required(),
+                    BooleanField::make('intended')
+                        ->label('الحضور')
+                        ->default(false)
+                        ->required(),
+
+                    BooleanField::make('has_order')
+                        ->label('طلب منتجات')
+                        ->dehydrated()
+                        ->reactive()
+                        ->default(false),
+                ])->columns(3),
+                Forms\Components\Section::make('طلب المنتجات')
+                    ->schema([
+                        Forms\Components\Repeater::make('order_items')
+                            ->label('المنتجات')
+                            ->schema([
+                                Forms\Components\Select::make('product_id')
+                                    ->label('المنتج')
+                                    ->options(Product::all()->pluck('name', 'id'))
+                                    ->required(),
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('الكمية')
+                                    ->required()
+                                    ->numeric()
+                                    ->rules(fn($get) => collect([
+                                        'required',
+                                        'numeric',
+                                        'min:1',
+                                        $get('product_id')
+                                            ? 'max:' . Product::find($get('product_id'))
+                                                ->stockInCenter(
+                                                    $get('../../center_id')
+                                                    ?? auth()->user()?->center_id
+                                                )
+                                            : null,
+                                    ])->filter()->all())
+                                    ->validationMessages([
+                                        'max' => 'الكمية تتجاوز المخزون المتاح في المركز.',
+                                    ]),
+                            ])
+                            ->columnSpanFull()
+                            ->columns()
+                            ->defaultItems(1)
+                            ->minItems(1)
+                            ->addActionLabel('إضافة منتج'),
+                    ])
+                    ->visible(fn($get) => $get('has_order'))
+                    ->columns(),
+                Forms\Components\Section::make([
+                    Forms\Components\RichEditor::make('notes')
+                        ->label('ملاحظات')
+                        ->columnSpanFull(),
+                ]),
             ]);
     }
 

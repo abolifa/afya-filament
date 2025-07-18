@@ -20,6 +20,8 @@ class DoctorResource extends Resource
     protected static ?string $label = "طبيب";
     protected static ?string $pluralLabel = "الأطباء";
 
+    protected static ?string $navigationGroup = "إدارة الموارد";
+
 
     public static function form(Form $form): Form
     {

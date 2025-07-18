@@ -24,7 +24,11 @@ class ProductStock extends Page implements HasTable, Forms\Contracts\HasForms
     protected static string $view = 'filament.pages.product-stock';
     protected static ?string $title = 'المخزن';
 
+    protected static ?string $navigationGroup = "إدارة المخزون";
+
+
     public ?int $selectedCenter = null;
+    public bool $showZeroStock = false;    // ← bind your checkbox
 
     public function mount(): void
     {
@@ -40,7 +44,7 @@ class ProductStock extends Page implements HasTable, Forms\Contracts\HasForms
             ->query(function () {
                 $base = Product::query()->select('products.*');
                 if (is_null($this->selectedCenter)) {
-                    return $base
+                    $base = $base
                         ->selectRaw(/** @lang sql */ '
                             (
                                 SELECT COALESCE(SUM(ii.quantity), 0)
@@ -59,57 +63,64 @@ class ProductStock extends Page implements HasTable, Forms\Contracts\HasForms
                             )
                             AS stock
                         ');
+                } else {
+                    $base = $base
+                        ->selectRaw(/** @lang sql */ '
+                            (
+                              SELECT COALESCE(SUM(ii.quantity),0)
+                              FROM invoice_items   AS ii
+                              JOIN invoices        AS iv ON iv.id = ii.invoice_id
+                              WHERE ii.product_id = products.id
+                                AND iv.center_id  = ?
+                                AND iv.status     = "confirmed"
+                            )
+                            +
+                            (
+                              SELECT COALESCE(SUM(tii.quantity),0)
+                              FROM transfer_invoice_items AS tii
+                              JOIN transfer_invoices      AS ti ON ti.id = tii.transfer_invoice_id
+                              WHERE tii.product_id   = products.id
+                                AND ti.to_center_id  = ?
+                                AND ti.status        = "confirmed"
+                            )
+                            -
+                            (
+                              SELECT COALESCE(SUM(oi.quantity),0)
+                              FROM order_items    AS oi
+                              JOIN orders         AS o ON o.id = oi.order_id
+                              WHERE oi.product_id = products.id
+                                AND o.center_id    = ?
+                                AND o.status       = "confirmed"
+                            )
+                            -
+                            (
+                              SELECT COALESCE(SUM(tii.quantity),0)
+                              FROM transfer_invoice_items AS tii
+                              JOIN transfer_invoices      AS ti ON ti.id = tii.transfer_invoice_id
+                              WHERE tii.product_id     = products.id
+                                AND ti.from_center_id  = ?
+                                AND ti.status          = "confirmed"
+                            )
+                            AS stock
+                        ', [
+                            $this->selectedCenter,
+                            $this->selectedCenter,
+                            $this->selectedCenter,
+                            $this->selectedCenter,
+                        ]);
                 }
 
-                return $base
-                    ->selectRaw(/** @lang sql */ '
-                        (
-                          SELECT COALESCE(SUM(ii.quantity),0)
-                          FROM invoice_items   AS ii
-                          JOIN invoices        AS iv ON iv.id = ii.invoice_id
-                          WHERE ii.product_id = products.id
-                            AND iv.center_id  = ?
-                            AND iv.status     = "confirmed"
-                        )
-                        +
-                        (
-                          SELECT COALESCE(SUM(tii.quantity),0)
-                          FROM transfer_invoice_items AS tii
-                          JOIN transfer_invoices      AS ti ON ti.id = tii.transfer_invoice_id
-                          WHERE tii.product_id   = products.id
-                            AND ti.to_center_id  = ?
-                            AND ti.status        = "confirmed"
-                        )
-                        -
-                        (
-                          SELECT COALESCE(SUM(oi.quantity),0)
-                          FROM order_items    AS oi
-                          JOIN orders         AS o ON o.id = oi.order_id
-                          WHERE oi.product_id = products.id
-                            AND o.center_id    = ?
-                            AND o.status       = "confirmed"
-                        )
-                        -
-                        (
-                          SELECT COALESCE(SUM(tii.quantity),0)
-                          FROM transfer_invoice_items AS tii
-                          JOIN transfer_invoices      AS ti ON ti.id = tii.transfer_invoice_id
-                          WHERE tii.product_id     = products.id
-                            AND ti.from_center_id  = ?
-                            AND ti.status          = "confirmed"
-                        )
-                        AS stock
-                    ', [
-                        $this->selectedCenter,
-                        $this->selectedCenter,
-                        $this->selectedCenter,
-                        $this->selectedCenter,
-                    ]);
+                if ($this->showZeroStock) {
+                    $base->havingRaw('stock != 0');
+                }
+
+                return $base;
             })
             ->columns([
                 TextColumn::make('name')
                     ->label('المنتج')
                     ->searchable(),
+
                 TextColumn::make('type')
                     ->label('النوع')
                     ->formatStateUsing(fn($state) => match ($state) {
@@ -117,7 +128,11 @@ class ProductStock extends Page implements HasTable, Forms\Contracts\HasForms
                         'equipment' => 'معدات طبية',
                         'service' => 'خدمة طبية',
                         'other' => 'أخرى',
-                    })->badge()->alignCenter()->sortable(),
+                    })
+                    ->badge()
+                    ->alignCenter()
+                    ->sortable(),
+
                 TextColumn::make('stock')
                     ->label('المخزون')
                     ->numeric()
@@ -148,10 +163,6 @@ class ProductStock extends Page implements HasTable, Forms\Contracts\HasForms
             ], layout: FiltersLayout::Dropdown);
     }
 
-    /**
-     * @throws Exception
-     */
-
     protected function getFormSchema(): array
     {
         return [
@@ -161,8 +172,16 @@ class ProductStock extends Page implements HasTable, Forms\Contracts\HasForms
                     ->options(Center::pluck('name', 'id'))
                     ->searchable()
                     ->reactive()
-                    ->columnSpanFull()
                     ->placeholder('جميع المراكز')
+                    ->afterStateUpdated(fn() => $this->resetTable()),
+
+                Forms\Components\ToggleButtons::make('showZeroStock')
+                    ->label('إستثناء المخزون صفر')
+                    ->boolean()
+                    ->inline()
+                    ->grouped()
+                    ->default(false)
+                    ->reactive()
                     ->afterStateUpdated(fn() => $this->resetTable()),
             ])->columns(),
         ];

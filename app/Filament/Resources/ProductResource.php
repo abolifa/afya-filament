@@ -19,6 +19,8 @@ class ProductResource extends Resource
     protected static ?string $label = "منتج";
     protected static ?string $pluralLabel = "الأدوية والمعدات";
 
+    protected static ?string $navigationGroup = "إدارة المخزون";
+
 
     public static function form(Form $form): Form
     {

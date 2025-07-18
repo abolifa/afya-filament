@@ -17,6 +17,8 @@ class InvoiceResource extends Resource
 
     protected static ?string $navigationIcon = 'fas-file-invoice-dollar';
 
+    protected static ?string $navigationGroup = "إدارة المخزون";
+
 
     protected static ?string $label = "فاتورة";
     protected static ?string $pluralLabel = "فواتير المشتريات";
